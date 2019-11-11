@@ -1,4 +1,7 @@
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import java.util.TreeSet;
 import java.util.Vector;
 
 public class gui {
@@ -6,18 +9,21 @@ public class gui {
     private Vector<JTable> node_tables;
     private JButton cycleButton;
     private JButton stabilizeButton;
+    //private data;
 
-    gui(int nodes)
+    gui(TreeSet<Node> nodes)
     {
-        this.num_nodes = nodes;
+        this.num_nodes = nodes.size();
         for (int i = 0; i < num_nodes; i++)
         {
-            JTable node_table = new JTable();
-            node_table.setName(String.format("Node %d", i));
+            DefaultTableModel table_model = new DefaultTableModel();
             for (int j = 0; j < num_nodes; j++)
             {
-                node_table.addColumn();
+                table_model.addColumn(String.format("%d", i));
             }
+
+            JTable node_table = new JTable(table_model);
+            node_table.setName(String.format("Node %d", i));
             node_tables.add(node_table);
         }
     }

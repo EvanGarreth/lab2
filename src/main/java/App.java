@@ -26,6 +26,6 @@ public class App
         // reads the file and populates file_lines and node_ids
         network.load_file(filename);
         network.setup();
-        network.run_until_stable();
+        //network.run_until_stable();
     }
 }

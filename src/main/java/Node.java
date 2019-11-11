@@ -65,6 +65,11 @@ public class Node {
     public boolean has_pending_update() { return pending_update; };
     public boolean has_update_to_send() { return update_to_send; };
 
+    public TreeMap<Integer, TreeMap<Integer, Integer>> get_dv_table()
+    {
+        return (TreeMap<Integer, TreeMap<Integer, Integer>>) this.dv_table.clone();
+    }
+
     // Return a clone of the row so changes in other nodes don't affect this one
     public TreeMap<Integer, Integer> get_row() { return (TreeMap<Integer, Integer>) this.dv_row.clone(); };
 
@@ -158,25 +163,5 @@ public class Node {
         this.update_to_send = true;
     }
 
-    public void print()
-    {
-        System.out.printf("Node %d\n", this.id);
-        String line = "  ";
-        for(int did : this.dv_row.keySet())
-        {
-            line += String.format("%2d|", did);
-        }
-        line += "\n";
 
-        for(int oid : this.dv_table.keySet())
-        {
-            line += oid + "|";
-            for (int did : this.dv_row.keySet())
-            {
-                line += String.format("%2d|", dv_table.get(oid).get(did));
-            }
-            line += "\n";
-        }
-        System.out.println(line);
-    }
 }

@@ -90,6 +90,8 @@ public class Network {
             source_node.add_link(dest, cost);
             dest_node.add_link(source, cost);
         }
+
+        this.load_gui();
     }
 
     public boolean is_stable()
@@ -153,9 +155,15 @@ public class Network {
         }
 
         System.out.printf("\n\n\nSteady State reached @ %d cycles\n", this.cycles);
-        for(int id : this.node_ids)
+    }
+
+    public void load_gui()
+    {
+        for (int node_id : this.node_ids)
         {
-            this.nodes.get(id).print();
+            Node node = this.nodes.get(node_id);
+            GUI node_gui = new GUI(node);
+
         }
     }
 }
