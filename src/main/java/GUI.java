@@ -21,13 +21,12 @@ import java.util.Vector;
 
 public class GUI extends JFrame implements TableModelListener
 {
-    //private JButton cycleButton;
-    //private JButton stabilizeButton;
     private Node node;
     private Network network;
     private DefaultTableModel table_model;
     private JTable node_table;
 
+    // initialize the node and create the first table
     GUI(Node node, Network network)
     {
         this.node = node;
@@ -41,6 +40,7 @@ public class GUI extends JFrame implements TableModelListener
         this.setVisible(true);
     }
 
+    // called on initialization and every time the table information changes
     private void recreate_table()
     {
         this.table_model = new DefaultTableModel() {
@@ -105,14 +105,13 @@ public class GUI extends JFrame implements TableModelListener
 
         this.node_table.getModel().addTableModelListener(this);
 
-        // Change the colors of the header and column 0 to denote that they are all headers
+        // Change the colors of the header and column 0 to denote that they are all headers and not editable
         DefaultTableCellRenderer render = new DefaultTableCellRenderer();
         Color fg = Color.white;
         Color bg = Color.black;
         render.setForeground(fg);
         render.setBackground(bg);
         this.node_table.getColumnModel().getColumn(0).setCellRenderer(render);
-
         this.node_table.getTableHeader().setBackground(bg);
         this.node_table.getTableHeader().setForeground(fg);
 
