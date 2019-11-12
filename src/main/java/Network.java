@@ -6,12 +6,15 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.Vector;
 
 public class Network {
     // Maximum nodes in the graph
     final int MAX_NODES = 6;
     // Maximum links a single node can have
     final int MAX_LINKS = 4;
+
+    private TreeMap<Integer, GUI> node_guis;
 
     // used to store the file contents on the heap for the second loop
     // since the file size is limited to 6 nodes and 4 links (as per project description,
@@ -142,6 +145,7 @@ public class Network {
 
             // Bellman-Ford is the most popular DV algorithm
             node.bellman_ford();
+            this.node_guis.get(node_id).update_data();
         }
     }
 
@@ -162,8 +166,19 @@ public class Network {
         for (int node_id : this.node_ids)
         {
             Node node = this.nodes.get(node_id);
-            GUI node_gui = new GUI(node);
-
+            GUI node_gui = new GUI(node, this);
+            this.node_guis.put(node_id, node_gui);
         }
+
+        
+    }
+
+    public void user_changed_link(int source_node, int dest_node, int cost)
+    {
+        Node source = this.nodes.get(source_node);
+        Node dest = this.nodes.get(dest_node);
+
+        source.adjust_cost(dest_node, cost);
+        dest.adjust_cost(source_node, cost);
     }
 }
