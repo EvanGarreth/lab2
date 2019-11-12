@@ -1,3 +1,7 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -14,18 +18,21 @@ public class Network {
     // Maximum links a single node can have
     final int MAX_LINKS = 4;
 
-    private TreeMap<Integer, GUI> node_guis;
+    private TreeMap<Integer, GUI> node_guis = new TreeMap<Integer, GUI>();
 
     // used to store the file contents on the heap for the second loop
     // since the file size is limited to 6 nodes and 4 links (as per project description,
     // storing it in memory isn't a concern
-    ArrayList<String> file_lines = new ArrayList<String>();
+    private ArrayList<String> file_lines = new ArrayList<String>();
 
     // used to store all the node ids in the graph. Needed before generating each node
-    TreeSet<Integer> node_ids = new TreeSet<Integer>();
+    private TreeSet<Integer> node_ids = new TreeSet<Integer>();
 
     // used to store all the nodes for running through a graph cycle
-    TreeMap<Integer, Node> nodes = new TreeMap<Integer, Node>();
+    private TreeMap<Integer, Node> nodes = new TreeMap<Integer, Node>();
+
+    JFrame main_gui;
+    JLabel cycle_label;
 
     // the number of cycles taken to reach a stable state
     int cycles = 0;
@@ -147,6 +154,7 @@ public class Network {
             node.bellman_ford();
             this.node_guis.get(node_id).update_data();
         }
+        this.cycle_label.setText(String.format("Not stable state, at cycle #%d", ++this.cycles));
     }
 
     public void run_until_stable()
@@ -155,10 +163,11 @@ public class Network {
         while (!this.is_stable())
         {
             this.next_cycle();
-            ++this.cycles;
         }
 
-        System.out.printf("\n\n\nSteady State reached @ %d cycles\n", this.cycles);
+        System.out.printf("\n\n\nStable State reached @ %d cycles\n", this.cycles);
+        this.cycle_label.setText(String.format("Stable State reached at cycle #%d", this.cycles));
+        this.main_gui.ge
     }
 
     public void load_gui()
@@ -170,7 +179,36 @@ public class Network {
             this.node_guis.put(node_id, node_gui);
         }
 
+        this.main_gui = new JFrame("Master Node");
+        this.main_gui.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.main_gui.setSize(150, 150);
+
+        //Creating the panel at bottom and adding components
+        JPanel panel = new JPanel(); // the panel is not visible in output
+        this.cycle_label = new JLabel(String.format("Not stable state, at cycle #%d", this.cycles));
+
+        JButton cycle = new JButton("Next Cycle");
+        cycle.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                next_cycle();
+            }
+        });
         
+        JButton reach_stable = new JButton("Run until Stable State");
+        reach_stable.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                run_until_stable();
+            }
+        });
+
+        panel.add(this.cycle_label); // Components Added using Flow Layout
+        //panel.add(label); // Components Added using Flow Layout
+        panel.add(cycle);
+        panel.add(reach_stable);
+
+        //Adding Components to the frame.
+        this.main_gui.getContentPane().add(BorderLayout.SOUTH, panel);
+        this.main_gui.setVisible(true);
     }
 
     public void user_changed_link(int source_node, int dest_node, int cost)
