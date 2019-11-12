@@ -1,10 +1,19 @@
+/*
+Evan Campbell
+
+1000921278
+*/
+
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableModel;
 import java.awt.Color;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.TreeMap;
@@ -24,11 +33,21 @@ public class GUI extends JFrame implements TableModelListener
         this.node = node;
         this.network = network;
 
+        recreate_table();
+
+        this.setTitle(String.format("Node %d", node.get_id()));
+        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.pack();
+        this.setVisible(true);
+    }
+
+    private void recreate_table()
+    {
         this.table_model = new DefaultTableModel() {
 
             // don't allow the leftmost cells (colum 0) to be editable
             // every other cell should allow edits
-            // this allows the user to see how changes propogate as per project description
+            // this allows the user to see how changes propagate as per project description
             @Override
             public boolean isCellEditable(int row, int column) {
                 //all cells false
@@ -63,11 +82,9 @@ public class GUI extends JFrame implements TableModelListener
         }
 
         this.node_table = new JTable(this.table_model);
-    
+
         this.add(new JScrollPane(this.node_table));
-        //node_table.setName();
-        //this.node_table.getModel().addTableModelListener(this);
-        this.node_table.addKeyListener(new KeyAdapter() {
+        /*this.node_table.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
@@ -83,7 +100,10 @@ public class GUI extends JFrame implements TableModelListener
                     network.user_changed_link(source_node, dest_node, cost);
                 }
             }
-        });
+
+        });*/
+
+        this.node_table.getModel().addTableModelListener(this);
 
         // Change the colors of the header and column 0 to denote that they are all headers
         DefaultTableCellRenderer render = new DefaultTableCellRenderer();
@@ -97,71 +117,48 @@ public class GUI extends JFrame implements TableModelListener
         this.node_table.getTableHeader().setForeground(fg);
 
         this.node_table.setRowSelectionAllowed(false);
-
-
-        this.setTitle(String.format("Node %d", node.get_id()));
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.pack();
-        this.setVisible(true);
     }
 
-    /*public void tableChanged(TableModelEvent e) {
-        int row = e.getFirstRow();
-        int column = e.getColumn();
-        TableModel model = (TableModel)e.getSource();
-
-        // dest node is the column header, source node is the object in column 0 of the row, and value is the cell edited
-        String column_name = model.getColumnName(column);
-        int dest_node = Integer.parseInt(column_name);
-        int source_node = (Integer) model.getValueAt(row, 0);
-        int cost = (Integer) model.getValueAt(row, column);
-        System.out.printf("Source: %d, Dest: %d, Cost: %d\n", source_node, dest_node, cost);
-
-        network.user_changed_link(source_node, dest_node, cost);
-    }*/
-
+    // update the table whenever a node has computed new costs
     public void update_data()
     {
-        TreeMap<Integer, Integer> row = node.get_row();
+        this.node_table.getModel().removeTableModelListener(this);
+        this.table_model.setRowCount(0);
         TreeMap<Integer, TreeMap<Integer, Integer>> dv_table = node.get_dv_table();
+        TreeMap<Integer, Integer> row = node.get_row();
 
         // loop  through each node's row in the table, getting the cost from that node to every other node n
-        int i = 0;
-        int j = 1;
-
         for (int node_n : dv_table.keySet())
         {
-            if(i >= this.table_model.getRowCount())
-            {
-                i = 0;
-                j = 1;
-                continue;
-            }
+            Vector<Integer> row_data = new Vector<>();
 
-            System.out.printf("[%d] PRE: I %d, NODE_N %d\n", this.node.get_id(), i, node_n);
-            int key = (Integer) this.table_model.getValueAt(i, 0);
-            if(node_n != key)
-            {
-                System.out.printf("[%d] KEY %d, NODE_N %d\n", this.node.get_id(), key, node_n);
-                continue;
-            }
+            // add current node id to the leftmost column
+            row_data.add(node_n);
 
             // Since this is a table can use the row from the previous loop since it will have the same order
             for (int node_y: row.keySet())
             {
                 Integer cost = dv_table.get(node_n).get(node_y);
-                System.out.printf("[%d] :: New cost: %d @ (%d, %d) with old as %d\n", this.node.get_id(), cost, i, j, this.table_model.getValueAt(i, j));
-
-                this.table_model.setValueAt(cost, i, j);
-                j++;
+                row_data.add(cost);
             }
-            i++;
-            j = 1;
+            this.table_model.addRow(row_data);
         }
+        this.node_table.getModel().addTableModelListener(this);
     }
 
     @Override
-    public void tableChanged(TableModelEvent tableModelEvent) {
+    public void tableChanged(TableModelEvent e) {
+        int row = e.getFirstRow();
+        int column = e.getColumn();
 
+        String column_name = this.node_table.getColumnName(column);
+
+        int dest_node = Integer.parseInt(column_name);
+        int source_node = (Integer) this.node_table.getValueAt(row, 0);
+
+        // user input is considered a string so convert to int
+        int cost = Integer.parseInt((String) node_table.getValueAt(row, column));
+
+        network.user_changed_link(source_node, dest_node, cost);
     }
 }

@@ -1,9 +1,8 @@
-import java.io.*;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.TreeMap;
-import java.util.TreeSet;
+/*
+Evan Campbell
 
+1000921278
+*/
 
 public class App
 {
@@ -25,7 +24,9 @@ public class App
 
         // reads the file and populates file_lines and node_ids
         network.load_file(filename);
+        // Constructs nodes with gathered information
         network.setup();
-        //network.run_until_stable();
+        // launches all the node windows and the main window
+        network.load_gui();
     }
 }

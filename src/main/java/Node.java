@@ -1,4 +1,9 @@
-import java.util.Collections;
+/*
+Evan Campbell
+
+1000921278
+*/
+
 import java.util.TreeSet;
 import java.util.TreeMap;
 
@@ -65,6 +70,7 @@ public class Node {
     public boolean has_pending_update() { return pending_update; };
     public boolean has_update_to_send() { return update_to_send; };
 
+    // return a clone of the dv_table, for use by the network and gui
     public TreeMap<Integer, TreeMap<Integer, Integer>> get_dv_table()
     {
         return (TreeMap<Integer, TreeMap<Integer, Integer>>) this.dv_table.clone();
@@ -148,7 +154,7 @@ public class Node {
         dv_table.put(source, val);
     }
 
-    // alert the node that its update has been propogated
+    // alert the node that its update has been propagated
     public void update_sent()
     {
         this.update_to_send = false;
@@ -162,6 +168,4 @@ public class Node {
         this.dv_row.put(neighbor, cost);
         this.update_to_send = true;
     }
-
-
 }

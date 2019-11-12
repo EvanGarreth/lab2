@@ -1,3 +1,9 @@
+/*
+Evan Campbell
+
+1000921278
+*/
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -31,11 +37,16 @@ public class Network {
     // used to store all the nodes for running through a graph cycle
     private TreeMap<Integer, Node> nodes = new TreeMap<Integer, Node>();
 
-    JFrame main_gui;
-    JLabel cycle_label;
+    private JFrame main_gui;
+    private JLabel cycle_label;
+    private JButton cycle;
+    private JButton run_to_stable;
 
     // the number of cycles taken to reach a stable state
-    int cycles = 0;
+    private int cycles = 0;
+
+    // when we started to go from a non stable to stable state
+    private int start_cycle = 0;
 
     void load_file(String filename)
     {
@@ -43,7 +54,6 @@ public class Network {
         URL resource = classLoader.getResource(filename);
 
         System.out.printf("Opening file %s\n", filename);
-
         File file = new File(resource.getFile());
         try
         {
@@ -76,6 +86,7 @@ public class Network {
         }
     }
 
+    // perform setup steps such as initializing needed vars and creating nodes with links
     public void setup()
     {
         // loop through node ids, creating a new node and adding to the node list
@@ -100,10 +111,9 @@ public class Network {
             source_node.add_link(dest, cost);
             dest_node.add_link(source, cost);
         }
-
-        this.load_gui();
     }
 
+    // alerts the program to whether or not the nodes are in a stable state
     public boolean is_stable()
     {
         for(int node_id : this.node_ids)
@@ -117,11 +127,12 @@ public class Network {
         return true;
     }
 
+    // ticks the next cycle of the network. Sends out updates to relevant nodes and performs the DV algorithm
     public void next_cycle()
     {
         for (int node_id : this.node_ids)
         {
-            // Get the node and check to see if it has an update to propogate to the other nodes
+            // Get the node and check to see if it has an update to propagate to the other nodes
             Node node = this.nodes.get(node_id);
             if (!node.has_update_to_send())
             {
@@ -136,7 +147,7 @@ public class Network {
                 node_to_update.update_row(node_id, node_row);
             }
 
-            // let the node know that its information has been propogated
+            // let the node know that its information has been propagated
             node.update_sent();
         }
 
@@ -154,24 +165,30 @@ public class Network {
             node.bellman_ford();
             this.node_guis.get(node_id).update_data();
         }
-        this.cycle_label.setText(String.format("Not stable state, at cycle #%d", ++this.cycles));
-    }
 
-    public void run_until_stable()
-    {
-        // Cycle until a stable state is reached
-        while (!this.is_stable())
+        ++this.cycles;
+
+        if(is_stable())
         {
-            this.next_cycle();
-        }
+            int num_cycles = this.cycles - this.start_cycle;
 
-        System.out.printf("\n\n\nStable State reached @ %d cycles\n", this.cycles);
-        this.cycle_label.setText(String.format("Stable State reached at cycle #%d", this.cycles));
-        this.main_gui.ge
+            // Disable the cycle buttons and tell the user how many cycles it took to reach the steady state
+            System.out.printf("\n\n\nStable State reached at cycle #%d, took %d cycles", this.cycles, num_cycles);
+            this.cycle_label.setText(String.format("Stable State reached at cycle #%d, took %d cycles", this.cycles, num_cycles));
+            this.cycle_label.setForeground(Color.red);
+            this.cycle.setEnabled(false);
+            this.run_to_stable.setEnabled(false);
+        }
+        else
+        {
+            this.cycle_label.setText(String.format("Not stable state, at cycle #%d", this.cycles));
+        }
     }
 
+    // loads each node's window along with the main window with the action buttons
     public void load_gui()
     {
+        // init gui for each node
         for (int node_id : this.node_ids)
         {
             Node node = this.nodes.get(node_id);
@@ -179,6 +196,7 @@ public class Network {
             this.node_guis.put(node_id, node_gui);
         }
 
+        // create the master node with buttons for cycling and running until stable state is reached
         this.main_gui = new JFrame("Master Node");
         this.main_gui.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.main_gui.setSize(150, 150);
@@ -187,36 +205,56 @@ public class Network {
         JPanel panel = new JPanel(); // the panel is not visible in output
         this.cycle_label = new JLabel(String.format("Not stable state, at cycle #%d", this.cycles));
 
-        JButton cycle = new JButton("Next Cycle");
-        cycle.addActionListener(new ActionListener() {
+        // add cycle button and relevant callback
+        this.cycle = new JButton("Next Cycle");
+        this.cycle.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 next_cycle();
             }
         });
-        
-        JButton reach_stable = new JButton("Run until Stable State");
-        reach_stable.addActionListener(new ActionListener() {
+
+        // add stable state button and relevant callback
+        this.run_to_stable = new JButton("Run until Stable State");
+        this.run_to_stable.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                run_until_stable();
+                // Cycle until a stable state is reached
+                while (!is_stable())
+                {
+                    next_cycle();
+                }
             }
         });
 
         panel.add(this.cycle_label); // Components Added using Flow Layout
         //panel.add(label); // Components Added using Flow Layout
-        panel.add(cycle);
-        panel.add(reach_stable);
+        panel.add(this.cycle);
+        panel.add(this.run_to_stable);
 
         //Adding Components to the frame.
         this.main_gui.getContentPane().add(BorderLayout.SOUTH, panel);
         this.main_gui.setVisible(true);
     }
 
+    // called by the GUI whenever a user enters a new value into a cell. Alerts the relevant nodes
     public void user_changed_link(int source_node, int dest_node, int cost)
     {
         Node source = this.nodes.get(source_node);
         Node dest = this.nodes.get(dest_node);
 
+        if(is_stable())
+        {
+            // Reenable the cycle buttons
+            System.out.printf("\n\n\nStable State ended @ %d cycles\n", this.cycles);
+            this.cycle_label.setText(String.format("Not stable state, at cycle #%d", this.cycles));
+            this.cycle_label.setForeground(Color.black);
+            this.cycle.setEnabled(true);
+            this.run_to_stable.setEnabled(true);
+
+            this.start_cycle = this.cycles;
+        }
+
         source.adjust_cost(dest_node, cost);
         dest.adjust_cost(source_node, cost);
+        System.out.println("change detected!");
     }
 }
